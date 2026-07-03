@@ -10,7 +10,7 @@ logger = logging.getLogger("hecate.heartbeat")
 class HeartbeatThread(threading.Thread):
     def __init__(self):
         super().__init__()
-        self.daemon = True  # Поток автоматически завершится при остановке Django
+        self.daemon = True  # Thread will automatically terminate when the main program exits
         self._stop_event = threading.Event()
 
     def stop(self):
@@ -19,15 +19,16 @@ class HeartbeatThread(threading.Thread):
     def run(self):
         logger.info("Hecate: Background heartbeat thread started.")
         
-        # Даем Django полностью инициализироваться перед началом отправки
+        # Give Django time to fully initialize before starting to send heartbeats
         time.sleep(2)
         
-        # Сначала регистрируем микросервис
+        # First, register the service with the discovery server to announce its presence
         self._register_service()
 
         while not self._stop_event.is_set():
             try:
-                # Собираем актуальные метрики RAM/CPU/Потоков
+                # Picking up current resource metrics to send to the discovery server.
+                # This includes CPU usage, RAM usage, active threads, and current thread pool allocations.
                 current_metrics = monitor.get_current_metrics()
                 
                 payload = {
@@ -36,7 +37,7 @@ class HeartbeatThread(threading.Thread):
                     "metrics": current_metrics
                 }
                 
-                # Шлем POST-запрос пульса на hecate-discovery
+                # Send post request to the discovery server's heartbeat endpoint
                 with httpx.Client(timeout=3.0) as client:
                     response = client.post(
                         f"{hecate_settings.DISCOVERY_URL}/api/v1/heartbeat", 
@@ -47,7 +48,7 @@ class HeartbeatThread(threading.Thread):
             except Exception as e:
                 logger.error(f"Hecate: Failed to send heartbeat to discovery server: {e}")
             
-            # Спим заданный интервал секунд
+            # wait for the configured heartbeat interval before sending the next pulse
             time.sleep(hecate_settings.HEARTBEAT_INTERVAL)
 
     def _register_service(self):

@@ -6,11 +6,11 @@ logger = logging.getLogger(__name__)
 
 class HecateResourceBalancer:
     def __init__(self):
-        # Хранилище пулов для разных внутренних модулей API
+        # Storage for thread pools for different internal API modules
         self._pools = {}
 
     def configure_pool(self, api_name: str, max_workers: int):
-        """Динамически настраивает или изменяет размер пула для конкретного Web-API"""
+        """Dynamically configures or changes the size of the pool for a specific Web-API"""
         logger.info(f"Hecate: Allocating {max_workers} threads for {api_name}")
         self._pools[api_name] = ThreadPoolExecutor(
             max_workers=max_workers, 
@@ -18,9 +18,9 @@ class HecateResourceBalancer:
         )
 
     def execute_in_pool(self, api_name: str, func, *args, **kwargs):
-        """Запускает задачу в строго выделенном пуле потоков для этого API"""
+        """Executes a task in a strictly allocated thread pool for this API"""
         if api_name not in self._pools:
-            # Дефолтный минимальный пул, если не настроен явно
+            # Default pool size if not configured yet
             self.configure_pool(api_name, max_workers=5)
         
         return self._pools[api_name].submit(func, *args, **kwargs)

@@ -4,12 +4,12 @@ import threading
 
 class MemoryRegistryStorage:
     def __init__(self):
-        # Структура: { app_name: { instance_id: { data, last_seen } } }
+        # Structure: { app_name: { instance_id: { data, last_seen } } }
         self._registry: Dict[str, Dict[str, dict]] = {}
         self._lock = threading.Lock()
 
     def register_or_update(self, app_name: str, instance_id: str, data: dict):
-        """Регистрация нового инстанса или обновление его метрик при Heartbeat"""
+        """Registers a new instance or updates its metrics on heartbeat"""
         with self._lock:
             if app_name not in self._registry:
                 self._registry[app_name] = {}
@@ -20,12 +20,12 @@ class MemoryRegistryStorage:
             }
 
     def get_all_services(self) -> Dict[str, Dict[str, dict]]:
-        """Возвращает карту всех активных сервисов"""
+        """Returns a snapshot of the current registry of services and their instances"""
         with self._lock:
             return self._registry
 
     def clean_expired_services(self, ttl_seconds: int = 30):
-        """Удаляет из реестра инстансы, которые не слали пульс дольше TTL"""
+        """Deletes instances that haven't sent a heartbeat within the TTL (Time-To-Live)"""
         now = time.time()
         with self._lock:
             apps_to_remove = []

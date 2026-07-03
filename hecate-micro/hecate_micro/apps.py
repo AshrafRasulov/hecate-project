@@ -7,11 +7,11 @@ class HecateMicroConfig(AppConfig):
     verbose_name = 'Hecate Microservice Client'
 
     def ready(self):
-        # Проверяем, что код выполняется не во время служебных команд типа migrate или collectstatic
-        # и не во время автоперезапуска (autoreloader) Django
+        # Check if the code is running during normal operation (not during management commands)
+        # and not during automatic reloading (autoreloader) of Django
         if 'manage.py' in sys.argv and ('runserver' in sys.argv or 'gunicorn' in sys.argv):
             from hecate_micro.tasks.heartbeat import HeartbeatThread
             
-            # Запускаем фоновый демон-мониторинг ресурсов хоста
+            # Start the background daemon for monitoring host resources
             heartbeat_thread = HeartbeatThread()
             heartbeat_thread.start()

@@ -5,11 +5,11 @@ from hecate_discovery.storage import storage
 
 app = FastAPI(
     title="Hecate Discovery Server",
-    description="Центральный реестр микросервисов и оркестратор ресурсов хостинга",
+    description="Central registry of microservices and resource orchestrator for hosting",
     version="0.1.0"
 )
 
-# Схемы валидации запросов (упрощенные версии наших DTO)
+# Schemas for request validation (simplified versions of our DTOs)
 class MetricsSchema(BaseModel):
     cpu_count: int
     cpu_usage_percent: float
@@ -34,7 +34,7 @@ class HeartbeatSchema(BaseModel):
 
 @app.post("/api/v1/register", status_code=201)
 async def register_service(payload: RegisterServiceSchema):
-    """Принимает запрос на первичную регистрацию Django-сервиса"""
+    """Accepts a request for initial registration of a Django service"""
     storage.register_or_update(payload.app_name, payload.instance_id, payload.model_dump())
     print(f"[Hecate Discovery] Registered service: {payload.app_name} [{payload.instance_id}] at {payload.host}:{payload.port}")
     return {"status": "registered", "instance_id": payload.instance_id}
@@ -42,15 +42,15 @@ async def register_service(payload: RegisterServiceSchema):
 
 @app.post("/api/v1/heartbeat")
 async def process_heartbeat(payload: HeartbeatSchema, background_tasks: BackgroundTasks):
-    """Регулярный пульс. Обновляет метрики CPU/RAM в реальном времени"""
-    # Запускаем очистку старых записей в фоне, чтобы не тормозить ответ
+    """Regular heartbeat. Updates CPU/RAM metrics in real-time"""
+    # Run the cleanup task in the background to remove expired services
     background_tasks.add_task(storage.clean_expired_services)
     
-    # Извлекаем текущие данные, чтобы не затереть хост/порт при обновлении метрик
+    # Extract the existing data to avoid overwriting host/port when updating metrics
     all_services = storage.get_all_services()
     existing_info = all_services.get(payload.app_name, {}).get(payload.instance_id, {}).get("info", {})
     
-    # Обновляем только метрики ресурсов
+    # Update the metrics and status, but preserve host/port if they exist
     existing_info["metrics"] = payload.metrics.model_dump()
     existing_info["status"] = "UP"
     
@@ -62,5 +62,5 @@ async def process_heartbeat(payload: HeartbeatSchema, background_tasks: Backgrou
 
 @app.get("/api/v1/services")
 async def get_registry():
-    """Эндпоинт для дашборда или API Gateway — отдает карту всей сети"""
+    """Endpoint for the dashboard or API Gateway — returns a map of the entire network"""
     return storage.get_all_services()

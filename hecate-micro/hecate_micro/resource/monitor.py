@@ -6,38 +6,41 @@ class HostResourceMonitor:
     def __init__(self):
         self.process = psutil.Process(os.getpid())
         
-        # Вызываем один раз при инициализации, чтобы сбросить счетчик процентов CPU
+        # call cpu_percent once to initialize the internal state of psutil
         self.process.cpu_percent(interval=None)
 
-    def get_current_metrics(self, pool_allocations: Dict[str, int] = None) -> dict:
-        """Собирает оперативную информацию об утилизации ресурсов хостинга"""
-        try:
-            from hecate_micro.resource.balancer import hecate_balancer
-            current_allocations = pool_allocations or hecate_balancer.get_allocations()
-            
-            cpu_count = psutil.cpu_count(logical=True) or 1
-            cpu_usage = self.process.cpu_percent(interval=None)
-            
-            virtual_mem = psutil.virtual_memory()
-            ram_total_mb = virtual_mem.total // (1024 * 1024)
-            ram_used_mb = self.process.memory_info().rss // (1024 * 1024)
-            active_threads = self.process.num_threads()
-            
-        except Exception:
-            cpu_count = 1
-            cpu_usage = 0.0
-            ram_total_mb = 0
-            ram_used_mb = 0
-            active_threads = 1
-            current_allocations = {}
+    @staticmethod  # This method can be static because it doesn't depend on instance variables
+    def get_current_metrics() -> Dict[str, int]:
+        process = psutil.Process(os.getpid())
+        
+        # 1. Check CPU: custom allocation or automatic
+        if hecate_settings.CUSTOM_CPU_COUNT is not None:
+            cpu_count = hecate_settings.CUSTOM_CPU_COUNT
+        else:
+            cpu_count = psutil.cpu_count(logical=True)
+
+        # 2. Check RAM: Manual override or automatic detection
+        if hecate_settings.CUSTOM_RAM_TOTAL is not None:
+            ram_total = hecate_settings.CUSTOM_RAM_TOTAL
+        else:
+            ram_total = psutil.virtual_memory().total // (1024 * 1024)
+
+        # Currently used memory by the process (keeping it real-time to observe overloads)
+        ram_used = process.memory_info().rss // (1024 * 1024)
+        cpu_usage = process.cpu_percent(interval=None)
+
+        # Additionally, we can include pool allocation info if needed
+        pool_alloc = {}
+        if hecate_settings.CPU_CORE_ASSIGNMENT:
+            pool_alloc["cpu_assignment_mask"] = hecate_settings.CPU_CORE_ASSIGNMENT
 
         return {
             "cpu_count": cpu_count,
-            "cpu_usage_percent": round(cpu_usage, 2),
-            "ram_total_mb": ram_total_mb,
-            "ram_used_mb": ram_used_mb,
-            "active_threads": active_threads,
-            "pool_allocations": current_allocations
+            "cpu_usage_percent": cpu_usage,
+            "ram_total_mb": ram_total,
+            "ram_used_by_app_mb": ram_used,
+            "active_threads": process.num_threads(),
+            "pool_allocations": pool_alloc
         }
 
 monitor = HostResourceMonitor()

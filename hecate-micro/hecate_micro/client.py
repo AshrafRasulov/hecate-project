@@ -50,5 +50,5 @@ class HecateServiceClient:
         resolved_url = self._resolve_url(url)
         return self._client.post(resolved_url, *args, **kwargs)
 
-# Экспортируем готовый клиент для использования в Django views
+# Expose a singleton instance for easy import and use across the Django project
 hecate_http = HecateServiceClient()
