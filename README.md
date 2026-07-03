@@ -9,8 +9,7 @@
 </p>
 
 ---
-## 📋 Обзор системы (Overview)
-## 📋 System Overview
+## 📋 Обзор системы (System Overview)
 
 **Hecate Project** — это легковесный, отказоустойчивый аналог экосистемы *Spring Boot Eureka / Netflix Service Discovery*, адаптированный для инфраструктуры **Python Django** и **FastAPI**. 
 **Hecate Project** — It is a lightweight, fault-tolerant alternative to the Spring Boot Eureka / Netflix Service Discovery ecosystem, adapted for the Python Django framework and FastAPI.
@@ -20,8 +19,7 @@ The project is designed for microservice orchestration, monitoring hosting resou
 
 ---
 
-## 🧬 Архитектура Монорепозитория
-## 🧬 Monorepository Architecture
+## 🧬 Архитектура Монорепозитория (Monorepository Architecture)
 
 Проект организован в виде чистой моноструктуры, разделенной на три ключевых слоя:
 The project is organized as a pure monostructure, divided into three key layers:
@@ -36,8 +34,7 @@ The project is organized as a pure monostructure, divided into three key layers:
 * **`hecate-micro`** — A client agent for Django integration. Automatically collects hosting metrics via psutil, manages isolated thread pools, and implements client-side load balancing.
 ---
 
-## 🛠️ Структура конфигурации (`hecate.ini`)
-## 🛠️ Configuration structure (`hecate.ini`)
+## 🛠️ Структура конфигурации (`hecate.ini`) / Configuration structure (`hecate.ini`)
 
 Библиотека поддерживает гибкое переопределение физических параметров хоста без необходимости править код приложений. Вы можете ограничить ресурсы или жестко зафиксировать маски распределения ядер:
 
@@ -62,22 +59,23 @@ cpu_assignment = 1:1:6
 
 🚀 Быстрый старт (Quick Start)
 1. Запуск Сервера Регистрации (Hecate Discovery)
-Сервер автоматически резервирует за собой системный порт 8771.
-The server automatically reserves system port 8771.
 
-    cd hecate-discovery
-    pip install -e .
-    python -m hecate_discovery
+    Сервер автоматически резервирует за собой системный порт 8771.
+    The server automatically reserves system port 8771.
 
-2. Подключение агента к любому Django Web-API
-Установите клиент локально в виртуальное окружение вашего Django-приложения:
-Connecting the agent to any Django Web API
-Install the client locally in your Django application's virtual environment:
+        cd hecate-discovery
+        pip install -e .
+        python -m hecate_discovery
+
+2. Подключение агента к любому Django Web-API / Connecting an agent to any Django Web API
+
+    Установите клиент локально в виртуальное окружение вашего Django-приложения:
+    Connecting the agent to any Django Web API
+    Install the client locally in your Django application's virtual environment:
 
     pip install -e /path/to/hecate-project/hecate-micro
 
-Добавьте библиотеку в settings.py:
-Add the library to settings.py:
+Добавьте библиотеку в settings.py / Add the library to settings.py:
 
     Python
     INSTALLED_APPS = [
@@ -85,8 +83,7 @@ Add the library to settings.py:
         'hecate_micro',  # Активирует автоматический фоновый сборщик метрик / Enables automatic background metrics collector
     ]
 
-📈 Конвенция Портов Экосистемы
-📈 Ports Ecosystem Convention
+📈 Конвенция Портов Экосистемы / Ports Ecosystem Convention
 
 Для предсказуемости инфраструктуры в Hecate заложена жесткая дефолтная иерархия портов:
 To ensure infrastructure predictability, Hecate has a rigid default port hierarchy:
